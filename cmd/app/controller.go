@@ -158,7 +158,23 @@ func (controller *OrderController) getOrderDetail(context *gin.Context) {
 	context.JSON(http.StatusOK, response)
 }
 
-
+func (controller *OrderController) deleteOrder(context *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("order_id"))
+	if id == 0 {
+		response := resources.JsonResponse("order_id is required", http.StatusBadRequest, "error", "")
+		context.AbortWithStatusJSON(http.StatusBadRequest, response)
+		return
+	}
+	service := controller.service
+	delete := service.deleteOrder(id)
+	if delete != nil {
+		response := resources.JsonResponse("Error on Deleting Order", http.StatusInternalServerError, "error", "")
+		context.AbortWithStatusJSON(http.StatusInternalServerError, response)
+		return
+	}
+	response := resources.JsonResponse("Deleting Order Success", http.StatusOK,"Success","")
+	context.JSON(http.StatusOK, response)
+}
 
 
 
