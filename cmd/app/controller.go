@@ -5,6 +5,7 @@ import (
 	"model"
 	"net/http"
 	"resources"
+	"strconv"
 	"time"
 	"github.com/gin-gonic/gin"
 
@@ -123,7 +124,41 @@ func (controller *OrderController) getOrderList(context *gin.Context) {
 		orderList = append(orderList, eachOrder)
 	}
 
-	response := resources.JsonResponsePagination("Success Retreive Order", http.StatusOK, 0,0,int(count), orderList)
+	response := resources.JsonResponsePagination("Success Retrieve Order", http.StatusOK, 0,0,int(count), orderList)
 	context.JSON(http.StatusOK, response)
 }
+
+func (controller *OrderController) getOrderDetail(context *gin.Context) {
+	service := controller.service
+	orderId, _ := strconv.Atoi(context.Param("order_id"))
+	orderResult, err := service.getOrderDetailById(uint(orderId), true)
+	if err != nil {
+		response := resources.JsonResponse("Order Not Found", http.StatusNotFound, "error", "")
+		context.AbortWithStatusJSON(http.StatusNotFound, response)
+		return
+	}
+	eachOrder := OrderOut{}
+	eachOrder.ID = orderResult.ID
+	eachOrder.CustomerName = orderResult.CustomerName
+	eachOrder.OrderedAt = orderResult.OrderedAt
+	eachOrder.Items = []ItemOut{}
+	for _, itemValue := range orderResult.Items {
+		eachItem := ItemOut{}
+		eachItem.ItemID = itemValue.ID
+		eachItem.ItemCode = itemValue.ItemCode
+		eachItem.Description = itemValue.Description
+		eachItem.Quantity = itemValue.Quantity
+		eachItem.OrderID = itemValue.OrderID
+
+		eachOrder.Items = append(eachOrder.Items, eachItem)
+	}
+	// \ Converting result to json
+
+	response := resources.JsonResponse("Success Retrieve Order", http.StatusOK, "Success", eachOrder)
+	context.JSON(http.StatusOK, response)
+}
+
+
+
+
 
