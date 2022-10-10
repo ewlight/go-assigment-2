@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"model"
 	"net/http"
 	"resources"
@@ -90,7 +91,39 @@ func (controller *OrderController) addOrder(context *gin.Context)  {
 		filteredOrder.Items = append(filteredOrder.Items, eachItem)
 	}
 
-	response :=resources.JsonResponsePagination("Create Order Success", http.StatusOK, 0, 0, 0, filteredOrder)
+	response := resources.JsonResponse("Create Order Success", http.StatusOK, "Success", filteredOrder)
+	context.JSON(http.StatusOK, response)
+}
+
+func (controller *OrderController) getOrderList(context *gin.Context) {
+	service := controller.service
+	result, err, count := service.getOrderList()
+	if err != nil {
+		response := resources.JsonResponse("Something When Wrong", http.StatusInternalServerError, "error", "")
+		context.AbortWithStatusJSON(http.StatusInternalServerError, response)
+	}
+
+	orderList := []OrderOut{}
+	for _, value := range result {
+		eachOrder := OrderOut{}
+		eachOrder.ID = value.ID
+		eachOrder.CustomerName = value.CustomerName
+		eachOrder.OrderedAt = value.OrderedAt
+		eachOrder.Items = []ItemOut{}
+		for _, itemValue := range value.Items {
+			eachItem := ItemOut{}
+			eachItem.ItemID = itemValue.ID
+			eachItem.ItemCode = itemValue.ItemCode
+			eachItem.Description = itemValue.Description
+			eachItem.Quantity = itemValue.Quantity
+			eachItem.OrderID = itemValue.OrderID
+
+			eachOrder.Items = append(eachOrder.Items, eachItem)
+		}
+		orderList = append(orderList, eachOrder)
+	}
+
+	response := resources.JsonResponsePagination("Success Retreive Order", http.StatusOK, 0,0,int(count), orderList)
 	context.JSON(http.StatusOK, response)
 }
 
